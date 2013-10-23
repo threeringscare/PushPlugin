@@ -87,10 +87,16 @@ public class GCMIntentService extends GCMBaseIntentService {
 
 		PendingIntent contentIntent = PendingIntent.getActivity(this, 0, notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT);
 		
+		int notificationIconResId = context.getResources().getIdentifier(
+			"notification_icon", "drawable", context.getPackageName());
+		if (notificationIconResId == 0) {
+			Log.e(TAG, "Couldn't locate notification_icon drawable resource.");
+		}
+
 		NotificationCompat.Builder mBuilder =
 			new NotificationCompat.Builder(context)
 				.setDefaults(Notification.DEFAULT_ALL)
-				.setSmallIcon(context.getApplicationInfo().icon)
+				.setSmallIcon(notificationIconResId)
 				.setWhen(System.currentTimeMillis())
 				.setContentTitle(extras.getString("title"))
 				.setTicker(extras.getString("title"))
