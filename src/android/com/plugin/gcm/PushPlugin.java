@@ -33,6 +33,11 @@ public class PushPlugin extends CordovaPlugin {
 	private static Bundle gCachedExtras = null;
     private static boolean gForeground = false;
 
+	public PushPlugin()
+	{
+		gForeground = true;
+	}
+
 	/**
 	 * Gets the application context from cordova's main activity.
 	 * @return the application context
@@ -109,7 +114,10 @@ public class PushPlugin extends CordovaPlugin {
 	public static void sendExtras(Bundle extras)
 	{
 		if (extras != null) {
-			extras.putBoolean("foreground", gForeground);
+			if (!extras.containsKey("foreground")) {
+				extras.putBoolean("foreground", gForeground);
+			}
+
 			if (gECB != null && gWebView != null) {
 				sendJavascript(convertBundleToJson(extras));
 			} else {

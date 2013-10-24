@@ -23,7 +23,7 @@ public class GCMIntentService extends GCMBaseIntentService {
 
 	public static final int NOTIFICATION_ID = 237;
 	private static final String TAG = "GCMIntentService";
-	
+
 	public GCMIntentService() {
 		super("GCMIntentService");
 	}
@@ -67,11 +67,18 @@ public class GCMIntentService extends GCMBaseIntentService {
 		Bundle extras = intent.getExtras();
 		if (extras != null)
 		{
-			PushPlugin.sendExtras(extras);
-
-			// Send a notification if there is a message and not in foreground
-			if (!PushPlugin.isInForeground() && extras.getString("message").length() != 0) {
+			// If we're not in the foreground and this isn't a silent
+			// notification, then create a NM notification. Otherwise, just send
+			// whatever we've received through to the app.
+			String message = extras.getString("message");
+			if (!PushPlugin.isInForeground() && message != null &&
+				!message.isEmpty())
+			{
 				createNotification(context, extras);
+			}
+			else
+			{
+				PushPlugin.sendExtras(extras);
 			}
 		}
 	}
