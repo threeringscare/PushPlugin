@@ -85,10 +85,11 @@ static char launchNotificationKey;
 - (void)applicationDidBecomeActive:(UIApplication *)application {
     
     NSLog(@"active");
-    
-    //zero badge
-    application.applicationIconBadgeNumber = 0;
 
+    NSInteger badgeCurr = application.applicationIconBadgeNumber;
+    application.applicationIconBadgeNumber = 0;
+    application.applicationIconBadgeNumber = badgeCurr;
+    
     if (![self.viewController.webView isLoading] && self.launchNotification) {
         PushPlugin *pushHandler = [self getCommandInstance:@"PushPlugin"];
 		
