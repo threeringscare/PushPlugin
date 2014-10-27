@@ -90,7 +90,7 @@ static char launchNotificationKey;
     application.applicationIconBadgeNumber = 0;
     application.applicationIconBadgeNumber = badgeCurr;
     
-    if (![self.viewController.webView isLoading] && self.launchNotification) {
+    if (self.launchNotification) {
         PushPlugin *pushHandler = [self getCommandInstance:@"PushPlugin"];
 		
         pushHandler.notificationMessage = self.launchNotification;

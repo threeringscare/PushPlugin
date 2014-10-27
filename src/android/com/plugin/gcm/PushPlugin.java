@@ -1,20 +1,19 @@
 package com.plugin.gcm;
 
-import java.util.Iterator;
-
+import android.app.NotificationManager;
+import android.content.Context;
+import android.os.Bundle;
+import android.util.Log;
+import com.google.android.gcm.GCMRegistrar;
+import org.apache.cordova.CallbackContext;
+import org.apache.cordova.CordovaInterface;
+import org.apache.cordova.CordovaPlugin;
+import org.apache.cordova.CordovaWebView;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import android.content.Context;
-import android.os.Bundle;
-import android.util.Log;
-
-import org.apache.cordova.CordovaWebView;
-import org.apache.cordova.CallbackContext;
-import org.apache.cordova.CordovaPlugin;
-
-import com.google.android.gcm.*;
+import java.util.Iterator;
 
 /**
  * @author awysocki
@@ -22,7 +21,7 @@ import com.google.android.gcm.*;
 
 public class PushPlugin extends CordovaPlugin {
 	public static final String TAG = "PushPlugin";
-	
+
 	public static final String REGISTER = "register";
 	public static final String UNREGISTER = "unregister";
 	public static final String EXIT = "exit";
@@ -59,7 +58,7 @@ public class PushPlugin extends CordovaPlugin {
 
 			try {
 				JSONObject jo = data.getJSONObject(0);
-				
+
 				gWebView = this.webView;
 				Log.v(TAG, "execute: jo=" + jo.toString());
 
@@ -70,9 +69,11 @@ public class PushPlugin extends CordovaPlugin {
 
 				GCMRegistrar.register(getApplicationContext(), gSenderID);
 				result = true;
+				callbackContext.success();
 			} catch (JSONException e) {
 				Log.e(TAG, "execute: Got JSON Exception " + e.getMessage());
 				result = false;
+				callbackContext.error(e.getMessage());
 			}
 
 			if ( gCachedExtras != null) {
@@ -80,16 +81,18 @@ public class PushPlugin extends CordovaPlugin {
 				sendExtras(gCachedExtras);
 				gCachedExtras = null;
 			}
-			
+
 		} else if (UNREGISTER.equals(action)) {
 
 			GCMRegistrar.unregister(getApplicationContext());
 
 			Log.v(TAG, "UNREGISTER");
 			result = true;
+			callbackContext.success();
 		} else {
 			result = false;
 			Log.e(TAG, "Invalid action : " + action);
+			callbackContext.error("Invalid action : " + action);
 		}
 
 		return result;
@@ -103,7 +106,7 @@ public class PushPlugin extends CordovaPlugin {
 		Log.v(TAG, "sendJavascript: " + _d);
 
 		if (gECB != null && gWebView != null) {
-			gWebView.sendJavascript(_d); 
+			gWebView.sendJavascript(_d);
 		}
 	}
 
@@ -128,15 +131,31 @@ public class PushPlugin extends CordovaPlugin {
 	}
 
     @Override
+    public void initialize(CordovaInterface cordova, CordovaWebView webView) {
+        super.initialize(cordova, webView);
+        gForeground = true;
+    }
+
+	@Override
     public void onPause(boolean multitasking) {
         super.onPause(multitasking);
         gForeground = false;
+        final NotificationManager notificationManager = (NotificationManager) cordova.getActivity().getSystemService(Context.NOTIFICATION_SERVICE);
+        notificationManager.cancelAll();
     }
 
     @Override
     public void onResume(boolean multitasking) {
         super.onResume(multitasking);
         gForeground = true;
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        gForeground = false;
+		gECB = null;
+		gWebView = null;
     }
 
     /*
@@ -148,14 +167,14 @@ public class PushPlugin extends CordovaPlugin {
 		{
 			JSONObject json;
 			json = new JSONObject().put("event", "message");
-        
+
 			JSONObject jsondata = new JSONObject();
 			Iterator<String> it = extras.keySet().iterator();
 			while (it.hasNext())
 			{
 				String key = it.next();
-				Object value = extras.get(key);	
-        	
+				Object value = extras.get(key);
+
 				// System data from Android
 				if (key.equals("from") || key.equals("collapse_key"))
 				{
@@ -176,10 +195,10 @@ public class PushPlugin extends CordovaPlugin {
 					{
 						json.put(key, value);
 					}
-        		
+
 					if ( value instanceof String ) {
 					// Try to figure out if the value is another JSON object
-						
+
 						String strValue = (String)value;
 						if (strValue.startsWith("{")) {
 							try {
@@ -211,7 +230,7 @@ public class PushPlugin extends CordovaPlugin {
 				}
 			} // while
 			json.put("payload", jsondata);
-        
+
 			Log.v(TAG, "extrasToJSON: " + json.toString());
 
 			return json;
@@ -219,8 +238,8 @@ public class PushPlugin extends CordovaPlugin {
 		catch( JSONException e)
 		{
 			Log.e(TAG, "extrasToJSON: JSON exception");
-		}        	
-		return null;      	
+		}
+		return null;
     }
 
     public static boolean isInForeground()
@@ -232,12 +251,4 @@ public class PushPlugin extends CordovaPlugin {
     {
     	return gWebView != null;
     }
-    
-	public void onDestroy() 
-	{
-		GCMRegistrar.onDestroy(getApplicationContext());
-		gWebView = null;
-		gECB = null;
-		super.onDestroy();
-	}
 }
