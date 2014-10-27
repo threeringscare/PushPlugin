@@ -209,6 +209,14 @@
 
     [self successWithMessage:[NSString stringWithFormat:@"app badge count set to %d", badge]];
 }
+
+- (void)getApplicationIconBadgeNumber:(CDVInvokedUrlCommand *)command {
+    CDVPluginResult *result =
+    [CDVPluginResult resultWithStatus:CDVCommandStatus_OK
+                         messageAsInt:[[UIApplication sharedApplication] applicationIconBadgeNumber]];
+    [self.commandDelegate sendPluginResult:result callbackId:command.callbackId];
+}
+
 -(void)successWithMessage:(NSString *)message
 {
     CDVPluginResult *commandResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:message];
